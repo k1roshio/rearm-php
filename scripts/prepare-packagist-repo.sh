@@ -21,6 +21,7 @@ if command -v rsync >/dev/null 2>&1; then
     --exclude '.git' \
     --exclude 'vendor' \
     --exclude 'README.md' \
+    --exclude '.github' \
     "${SRC}/" "${DST}/"
 else
   # keep DST README if present

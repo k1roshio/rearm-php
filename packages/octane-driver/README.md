@@ -121,6 +121,15 @@ $protocol = new Protocol;
 $framed = $protocol->encodeResponse(['status' => 200, 'headers' => [], 'body' => 'ok']);
 ```
 
+## Testing
+
+```bash
+composer install
+composer test
+```
+
+PHPUnit covers MessagePack framing and committed Rust↔PHP wire fixtures under `tests/fixtures/` (regenerate with `cargo run -p rearm-protocol --example write_fixtures` from the monorepo).
+
 ## Package layout
 
 ```

@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  rust:
+    name: cargo test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace
+
+  php:
+    name: phpunit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: sockets, pcntl
+          coverage: none
+      - name: Composer install
+        working-directory: packages/octane-driver
+        run: composer install --no-interaction --prefer-dist
+      - name: PHPUnit
+        working-directory: packages/octane-driver
+        run: composer test
+
+  smoke:
+    name: integration smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: sockets, pcntl
+          coverage: none
+      - name: Composer install (echo-worker autoload)
+        working-directory: packages/octane-driver
+        run: composer install --no-interaction --prefer-dist --no-dev
+      - name: Smoke
+        run: ./scripts/integration-smoke.sh

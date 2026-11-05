@@ -1068,6 +1068,33 @@ fn path_matches(path: &str, pattern: &str) -> bool {
     path == pattern || path.starts_with(&format!("{pattern}/"))
 }
 
+#[cfg(test)]
+mod allowlist_tests {
+    use super::*;
+
+    #[test]
+    fn exact_and_prefix_and_glob() {
+        let patterns = vec![
+            "/io-slow".into(),
+            "/report*".into(),
+            "/export".into(),
+        ];
+        assert!(path_matches_allowlist("/io-slow", &patterns));
+        assert!(path_matches_allowlist("/io-slow/extra", &patterns));
+        assert!(path_matches_allowlist("/report", &patterns));
+        assert!(path_matches_allowlist("/report-csv", &patterns));
+        assert!(path_matches_allowlist("/export/x", &patterns));
+        assert!(!path_matches_allowlist("/fast", &patterns));
+        assert!(!path_matches_allowlist("/io", &patterns));
+    }
+
+    #[test]
+    fn strips_query_string() {
+        let patterns = vec!["/slow".into()];
+        assert!(path_matches_allowlist("/slow?x=1", &patterns));
+    }
+}
+
 async fn restart_worker(worker: &mut Worker, donor: &Option<DonorHandle>) -> Result<()> {
     worker.shutdown().await;
     start_worker(worker, donor).await

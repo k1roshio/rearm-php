@@ -203,3 +203,38 @@ impl Config {
         self.defer_chunk_ms.max(1)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn long_paths_list_parses_and_trims() {
+        let cfg = Config::try_parse_from([
+            "rearm-server",
+            "--long-paths",
+            " /a , /b* , ",
+            "--worker-script",
+            "/tmp/worker.php",
+        ])
+        .unwrap();
+        assert_eq!(cfg.long_paths_list(), vec!["/a".to_string(), "/b*".to_string()]);
+        assert!(cfg.long_pool_enabled());
+    }
+
+    #[test]
+    fn workers_max_defaults_to_min() {
+        let cfg = Config::try_parse_from([
+            "rearm-server",
+            "--workers",
+            "4",
+            "--workers-max",
+            "0",
+            "--worker-script",
+            "/tmp/worker.php",
+        ])
+        .unwrap();
+        assert_eq!(cfg.workers_min(), 4);
+        assert_eq!(cfg.workers_max_effective(), 4);
+    }
+}

@@ -11,3 +11,7 @@ bytes = { workspace = true }
 serde = { workspace = true }
 rmp-serde = { workspace = true }
 thiserror = { workspace = true }
+
+[[example]]
+name = "write_fixtures"
+path = "examples/write_fixtures.rs"

@@ -140,4 +140,49 @@ mod tests {
         assert!(enc.is_some());
         assert!(out.len() < body.len());
     }
+
+    #[test]
+    fn off_mode_never_compresses() {
+        let mut req = HeaderMap::new();
+        req.insert(
+            header::ACCEPT_ENCODING,
+            HeaderValue::from_static("br, gzip"),
+        );
+        let resp = HeaderMap::new();
+        let body = vec![b'x'; 4096];
+        let (out, enc) = maybe_compress(CompressMode::Off, &req, &resp, body.clone());
+        assert_eq!(out, body);
+        assert!(enc.is_none());
+    }
+
+    #[test]
+    fn skips_already_encoded_or_binary_types() {
+        let mut req = HeaderMap::new();
+        req.insert(
+            header::ACCEPT_ENCODING,
+            HeaderValue::from_static("br"),
+        );
+        let mut resp = HeaderMap::new();
+        resp.insert(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("image/png"),
+        );
+        let body = vec![b'x'; 4096];
+        let (out, enc) = maybe_compress(CompressMode::Brotli, &req, &resp, body.clone());
+        assert_eq!(out, body);
+        assert!(enc.is_none());
+    }
+
+    #[test]
+    fn apply_encoding_headers_sets_vary() {
+        let mut headers = HeaderMap::new();
+        headers.insert(header::CONTENT_LENGTH, HeaderValue::from_static("10"));
+        apply_encoding_headers(&mut headers, Some("br"));
+        assert_eq!(
+            headers.get(header::CONTENT_ENCODING).unwrap(),
+            "br"
+        );
+        assert_eq!(headers.get(header::VARY).unwrap(), "accept-encoding");
+        assert!(!headers.contains_key(header::CONTENT_LENGTH));
+    }
 }

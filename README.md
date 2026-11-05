@@ -66,6 +66,24 @@ Rust reads env / CLI (see `rearm-server --help`). Common variables:
 
 Metrics: `GET /__rearm/metrics`
 
+## Testing
+
+```bash
+# Rust unit tests
+cargo test --workspace
+
+# PHP Protocol / cross-compat fixtures (needs composer install in the package)
+cd packages/octane-driver && composer install && composer test
+
+# Regenerate Rust→PHP wire fixtures (optional)
+cargo run -p rearm-protocol --example write_fixtures
+
+# End-to-end smoke: rearm-server + echo-worker (Linux/WSL)
+./scripts/integration-smoke.sh
+```
+
+CI (`.github/workflows/ci.yml`) runs all three on Ubuntu.
+
 ## License
 
 MIT © [k1roshio](https://github.com/k1roshio) — creator of Rearm. See [`LICENSE`](LICENSE).

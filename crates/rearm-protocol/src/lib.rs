@@ -138,4 +138,69 @@ mod tests {
         assert!(decoded.form.is_none());
         assert!(decoded.files.is_none());
     }
+
+    #[test]
+    fn truncated_header_errors() {
+        let err = split_length_prefix(&[0x00, 0x01]).unwrap_err();
+        assert!(matches!(err, ProtocolError::TruncatedHeader));
+    }
+
+    #[test]
+    fn incomplete_frame_errors() {
+        let mut buf = vec![0, 0, 0, 10];
+        buf.extend_from_slice(b"short");
+        let err = split_length_prefix(&buf).unwrap_err();
+        assert!(matches!(
+            err,
+            ProtocolError::Incomplete { have: 9, need: 14 }
+        ));
+    }
+
+    #[test]
+    fn frame_reader_rejects_oversized_declared_length() {
+        let mut reader = FrameReader::with_max_frame_size(8);
+        // length prefix = 100 bytes payload
+        let err = reader
+            .push(&(100u32.to_be_bytes()))
+            .expect_err("declared length too large");
+        assert!(matches!(err, ProtocolError::FrameTooLarge(100)));
+    }
+
+    #[test]
+    fn binary_body_roundtrip() {
+        let body: Vec<u8> = (0u8..=255).collect();
+        let req = RequestFrame {
+            method: "PUT".into(),
+            uri: "/bin".into(),
+            headers: HashMap::new(),
+            remote_addr: "127.0.0.1:1".into(),
+            body: body.clone(),
+            form: None,
+            files: None,
+            control: None,
+        };
+        let encoded = encode_frame(&req).unwrap();
+        let (_, payload) = split_length_prefix(&encoded).unwrap();
+        let decoded: RequestFrame = decode_frame(payload).unwrap();
+        assert_eq!(decoded.body, body);
+    }
+
+    #[test]
+    fn empty_form_map_roundtrip() {
+        let req = RequestFrame {
+            method: "POST".into(),
+            uri: "/form".into(),
+            headers: HashMap::new(),
+            remote_addr: "127.0.0.1:1".into(),
+            body: Vec::new(),
+            form: Some(HashMap::new()),
+            files: Some(Vec::new()),
+            control: None,
+        };
+        let encoded = encode_frame(&req).unwrap();
+        let (_, payload) = split_length_prefix(&encoded).unwrap();
+        let decoded: RequestFrame = decode_frame(payload).unwrap();
+        assert_eq!(decoded.form.as_ref().map(|m| m.is_empty()), Some(true));
+        assert_eq!(decoded.files.as_ref().map(|f| f.is_empty()), Some(true));
+    }
 }
