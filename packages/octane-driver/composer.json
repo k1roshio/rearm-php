@@ -18,6 +18,8 @@
     "keywords": ["laravel", "octane", "rearm", "msgpack", "unix-socket"],
     "require": {
         "php": "^8.5",
+        "ext-pcntl": "*",
+        "ext-sockets": "*",
         "illuminate/support": "^12.0",
         "laravel/octane": "^2.0",
         "rybakit/msgpack": "^0.9"
@@ -26,6 +28,7 @@
         "phpunit/phpunit": "^11.5"
     },
     "suggest": {
+        "ext-ffi": "Needed for REARM_FORK_SCALE (close inherited donor socket FDs after pcntl_fork).",
         "ext-msgpack": "Optional pecl-msgpack C extension. This package uses pure-PHP rybakit/msgpack by default so Docker images can add the extension later without code changes."
     },
     "autoload": {
