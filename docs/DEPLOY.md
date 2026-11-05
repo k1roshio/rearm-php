@@ -188,16 +188,51 @@ php artisan octane:rearm --host=0.0.0.0 --port=8080 --workers=8 --workers-max=16
 
 ## 4. Environment (`.env`)
 
-Minimal:
+### Recommended starter (bench-style)
+
+Values below match a typical production-ish / fullbench profile: short pool **8→16**, optional long pool **4→6**, fork scale-up, Brotli. Copy into `.env` and adjust paths/sizes for your box.
 
 ```env
 OCTANE_SERVER=rearm
+
+# Listen
 REARM_HTTP_ADDR=0.0.0.0:8000
+
+# Short / default pool (warm → elastic max)
 REARM_WORKERS=8
 REARM_WORKERS_MAX=16
+
+# Long pool (leave LONG_PATHS empty for a single shared pool)
+# REARM_LONG_PATHS=/reports*,/export,/io-slow
+REARM_LONG_WORKERS=4
+REARM_LONG_WORKERS_MAX=6
+
+# Elastic scale-up (grow when requests wait for a free worker)
+REARM_SCALE_UP_WAITERS=2
+REARM_SCALE_UP_QUEUE_MS=25
+REARM_SCALE_UP_COOLDOWN_MS=250
+REARM_SCALE_UP_BATCH=4
+
+# Elastic scale-down (shed surplus workers after idle / post-burst grace)
+REARM_SCALE_DOWN_IDLE_MS=5000
+REARM_SCALE_DOWN_GRACE_MS=15000
+REARM_SCALE_DOWN_BATCH=1
+
+# Recycle / spawn strategy
+REARM_MEMORY_LIMIT_MB=512
+REARM_MAX_REQUESTS=0
+REARM_FORK_SCALE=true
+
+# Responses
+REARM_COMPRESS=brotli
+
+# Optional: only if binary is not at bin/rearm-server
+# REARM_BIN=/usr/local/bin/rearm-server
 ```
 
-Full reference (all optional unless noted):
+`REARM_APP_ROOT` / `REARM_WORKER_SCRIPT` are set automatically when you start via Artisan (`base_path()` + package `worker.php`). Set them only when launching `rearm-server` directly (Docker/systemd without Octane).
+
+### Full reference
 
 | Variable | Default (Octane package) | Purpose |
 |----------|--------------------------|---------|
@@ -220,12 +255,12 @@ Full reference (all optional unless noted):
 | `REARM_SCALE_DOWN_GRACE_MS` | `15000` | Block scale-down after a scale-up |
 | `REARM_SCALE_DOWN_BATCH` | `1` | Workers stopped per monitor tick |
 | `REARM_MEMORY_LIMIT_MB` | `512` | Recycle worker when RSS exceeds this |
-| `REARM_MAX_REQUESTS` | `0` | Recycle after N requests (`0` = never via this knob) |
+| `REARM_MAX_REQUESTS` | `0` | Recycle after N requests (`0` = disabled) |
 | `REARM_FORK_SCALE` | `true` | Warm donor + `pcntl_fork` scale-up |
 | `REARM_PHP_BIN` | `php` | PHP CLI used to spawn workers |
-| `REARM_WORKER_SCRIPT` | package `worker.php` | Override worker entrypoint |
-| `REARM_APP_ROOT` | `base_path()` | Laravel root |
-| `REARM_UPLOAD_DIR` | server default | Multipart temp files |
+| `REARM_WORKER_SCRIPT` | package `worker.php` | Override only for non-Artisan launches |
+| `REARM_APP_ROOT` | Artisan → `base_path()` | Override only for non-Artisan launches |
+| `REARM_UPLOAD_DIR` | `/var/www/uploads` (Rust default) | Multipart temp dir; set if that path is wrong for your host |
 | `REARM_SOCK_DIR` | `/tmp/rearm-socks` | Per-worker UDS directory |
 | `REARM_COMPRESS` | `brotli` | `brotli` / `gzip` / `off` |
 | `REARM_DEFER_MAX_MS` | `300000` | Cap for `X-Rearm-Defer-Ms` |
