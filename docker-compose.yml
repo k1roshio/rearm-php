@@ -1,0 +1,34 @@
+# Minimal Rearm runtime image (binary + PHP CLI for workers).
+# Mount your Laravel app and set REARM_APP_ROOT.
+services:
+  rearm:
+    build:
+      context: .
+      dockerfile: docker/rearm/Dockerfile
+    image: rearm-server:local
+    environment:
+      REARM_HTTP_ADDR: 0.0.0.0:8080
+      REARM_HTTP3: "false"
+      REARM_HTTP3_ADDR: 0.0.0.0:4433
+      REARM_CERT: /var/www/certs/server.crt
+      REARM_KEY: /var/www/certs/server.key
+      REARM_UPLOAD_DIR: /var/www/uploads
+      REARM_APP_ROOT: /var/www/app
+      REARM_WORKER_SCRIPT: /var/www/packages/octane-driver/bin/worker.php
+      REARM_PHP_BIN: php
+      REARM_WORKERS: "4"
+      REARM_WORKERS_MAX: "16"
+      REARM_FORK_SCALE: "true"
+      REARM_COMPRESS: brotli
+    volumes:
+      - ./packages/octane-driver:/var/www/packages/octane-driver:ro
+      - ./certs:/var/www/certs:ro
+      # - /path/to/your-laravel:/var/www/app
+      - rearm-uploads:/var/www/uploads
+    ports:
+      - "8080:8080"
+      - "4433:4433/udp"
+    restart: unless-stopped
+
+volumes:
+  rearm-uploads:

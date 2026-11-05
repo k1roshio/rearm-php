@@ -1,0 +1,49 @@
+{
+    "name": "k1roshio/octane-driver-rearm",
+    "description": "Laravel Octane driver and MessagePack Unix-socket worker for the Rearm Rust application server",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "k1roshio",
+            "homepage": "https://github.com/k1roshio",
+            "role": "Creator"
+        }
+    ],
+    "homepage": "https://github.com/k1roshio/octane-driver-rearm",
+    "support": {
+        "issues": "https://github.com/k1roshio/octane-driver-rearm/issues",
+        "source": "https://github.com/k1roshio/octane-driver-rearm"
+    },
+    "keywords": ["laravel", "octane", "rearm", "msgpack", "unix-socket"],
+    "require": {
+        "php": "^8.5",
+        "illuminate/support": "^12.0",
+        "laravel/octane": "^2.0",
+        "rybakit/msgpack": "^0.9"
+    },
+    "suggest": {
+        "ext-msgpack": "Optional pecl-msgpack C extension. This package uses pure-PHP rybakit/msgpack by default so Docker images can add the extension later without code changes."
+    },
+    "autoload": {
+        "psr-4": {
+            "Rearm\\Octane\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Rearm\\Octane\\RearmServiceProvider"
+            ]
+        }
+    },
+    "bin": [
+        "bin/worker.php",
+        "bin/echo-worker.php"
+    ],
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true
+    }
+}

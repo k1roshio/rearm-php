@@ -1,0 +1,15 @@
+target
+**/vendor
+**/node_modules
+.git
+.idea
+.vscode
+*.log
+.env
+.env.*
+certs/*.crt
+certs/*.key
+certs/*.pem
+dist
+docs
+**/.git
