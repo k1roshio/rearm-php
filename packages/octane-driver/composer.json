@@ -50,7 +50,8 @@
     },
     "bin": [
         "bin/worker.php",
-        "bin/echo-worker.php"
+        "bin/echo-worker.php",
+        "bin/rearm-install"
     ],
     "minimum-stability": "stable",
     "prefer-stable": true,

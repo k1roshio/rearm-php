@@ -24,7 +24,7 @@ Packagist package name: **`k1roshio/octane-driver-rearm`** (publish from a repo 
 
 ```bash
 composer require k1roshio/octane-driver-rearm
-# Install / place the rearm-server binary on PATH (or set REARM_BIN)
+php artisan rearm:install-binary   # downloads Linux prebuild into bin/rearm-server
 # Add config/octane.php → 'server' => 'rearm' and a 'rearm' => […] section
 php artisan octane:start --server=rearm
 # or: php artisan rearm:start
@@ -32,12 +32,25 @@ php artisan octane:start --server=rearm
 
 Defaults live in the package (`config/rearm.php`) and merge into `config('octane.rearm')`. Override via `.env` (`REARM_*`) or CLI flags.
 
-## Build the binary
+## Install the binary
+
+Preferred (Linux x86_64 / aarch64) — from [GitHub Releases](https://github.com/k1roshio/rearm-php/releases):
+
+```bash
+php artisan rearm:install-binary
+# or without Laravel: vendor/bin/rearm-install
+```
+
+Puts `bin/rearm-server` in the app root (auto-detected on start). Optional: `REARM_BIN=/path/to/rearm-server`.
+
+Build from source instead:
 
 ```bash
 cargo build --release -p rearm-server
 # → target/release/rearm-server
 ```
+
+Publish a release: push a tag `v*` on this repo (see `.github/workflows/release.yml`).
 
 ## Docker
 

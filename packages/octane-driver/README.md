@@ -11,7 +11,15 @@ The Rust `rearm-server` binary is the real process supervisor. This package:
 
 ## Install
 
-Path repository from the monorepo (see `apps/bench`):
+```bash
+composer require k1roshio/octane-driver-rearm
+php artisan rearm:install-binary
+# or: vendor/bin/rearm-install
+```
+
+Downloads a Linux (`x86_64` / `aarch64`) `rearm-server` from [`k1roshio/rearm-php` releases](https://github.com/k1roshio/rearm-php/releases) into `bin/rearm-server` (auto-detected on start).
+
+Path repository from the monorepo:
 
 ```json
 {

@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+      - name: Build release binary
+        run: cargo build --release -p rearm-server --target ${{ matrix.target }}
+      - name: Package asset
+        run: |
+          set -euo pipefail
+          BIN="target/${{ matrix.target }}/release/rearm-server"
+          ASSET="rearm-server-${{ matrix.target }}"
+          cp "$BIN" rearm-server
+          chmod +x rearm-server
+          tar -czf "${ASSET}.tar.gz" rearm-server
+          sha256sum "${ASSET}.tar.gz" > "${ASSET}.tar.gz.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rearm-server-${{ matrix.target }}
+          path: |
+            rearm-server-${{ matrix.target }}.tar.gz
+            rearm-server-${{ matrix.target }}.tar.gz.sha256
+
+  publish:
+    name: publish GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: List assets
+        run: ls -la dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

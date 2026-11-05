@@ -1,0 +1,67 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Standalone installer (no Laravel required):
+ *   vendor/bin/rearm-install
+ *   vendor/bin/rearm-install --version=v0.1.0 --dir=./bin
+ */
+
+use Rearm\Octane\BinaryInstaller;
+
+$autoloadCandidates = [
+    dirname(__DIR__).'/vendor/autoload.php',
+    dirname(__DIR__, 3).'/vendor/autoload.php',
+    dirname(__DIR__, 4).'/vendor/autoload.php',
+];
+
+$autoload = null;
+foreach ($autoloadCandidates as $candidate) {
+    if (is_file($candidate)) {
+        $autoload = $candidate;
+        break;
+    }
+}
+
+if ($autoload === null) {
+    fwrite(STDERR, "rearm-install: Composer autoload not found.\n");
+    exit(1);
+}
+
+require $autoload;
+
+$opts = getopt('', ['version::', 'dir::', 'force', 'repo::', 'help']);
+if (isset($opts['help'])) {
+    fwrite(STDOUT, "Usage: rearm-install [--version=vX.Y.Z] [--dir=./bin] [--force] [--repo=owner/repo]\n");
+    exit(0);
+}
+
+$repo = $opts['repo'] ?? BinaryInstaller::DEFAULT_REPO;
+$token = getenv('GITHUB_TOKEN') ?: null;
+$installer = new BinaryInstaller((string) $repo, is_string($token) && $token !== '' ? $token : null);
+
+$dir = $opts['dir'] ?? null;
+$destination = ($dir !== null && $dir !== '')
+    ? rtrim((string) $dir, '/\\').DIRECTORY_SEPARATOR.'rearm-server'
+    : BinaryInstaller::defaultDestination(getcwd() ?: null);
+
+if (is_file($destination) && ! isset($opts['force'])) {
+    fwrite(STDOUT, "Binary already exists: {$destination} (pass --force to replace)\n");
+    exit(0);
+}
+
+try {
+    $result = $installer->install(
+        $destination,
+        isset($opts['version']) ? (string) $opts['version'] : null,
+    );
+} catch (Throwable $e) {
+    fwrite(STDERR, 'rearm-install: '.$e->getMessage()."\n");
+    exit(1);
+}
+
+fwrite(STDOUT, "Installed {$result['version']} → {$result['path']}\n");
+fwrite(STDOUT, "Set REARM_BIN={$result['path']} or keep bin/rearm-server in the project root.\n");
+exit(0);

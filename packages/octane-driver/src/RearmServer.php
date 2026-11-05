@@ -106,17 +106,50 @@ final class RearmServer
     /**
      * Resolve the rearm-server binary path.
      *
-     * @param  array{bin?: string}  $options
+     * Order: explicit option / REARM_BIN / project bin/rearm-server / PATH name.
+     *
+     * @param  array{bin?: string|null}  $options
      */
     public static function resolveBinary(array $options = []): string
     {
-        $bin = $options['bin'] ?? self::env(self::ENV_BIN) ?? 'rearm-server';
-
-        if ($bin !== 'rearm-server' && is_file($bin) && is_executable($bin)) {
-            return $bin;
+        $explicit = null;
+        if (array_key_exists('bin', $options) && $options['bin'] !== null && $options['bin'] !== '') {
+            $explicit = (string) $options['bin'];
+        } else {
+            $explicit = self::env(self::ENV_BIN);
         }
 
-        return $bin;
+        // Absolute / custom paths win immediately.
+        if ($explicit !== null && $explicit !== 'rearm-server') {
+            return $explicit;
+        }
+
+        foreach (self::localBinaryCandidates() as $candidate) {
+            if (is_file($candidate) && is_executable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $explicit ?? 'rearm-server';
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function localBinaryCandidates(): array
+    {
+        $candidates = [];
+
+        if (function_exists('base_path')) {
+            $candidates[] = base_path('bin'.DIRECTORY_SEPARATOR.'rearm-server');
+        }
+
+        $cwd = getcwd();
+        if (is_string($cwd) && $cwd !== '') {
+            $candidates[] = $cwd.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.'rearm-server';
+        }
+
+        return array_values(array_unique($candidates));
     }
 
     /**

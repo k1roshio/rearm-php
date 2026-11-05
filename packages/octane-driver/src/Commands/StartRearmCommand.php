@@ -32,10 +32,15 @@ class StartRearmCommand extends Command
         /** @var array<string, mixed> $config */
         $config = (array) config('octane.rearm', []);
 
-        $bin = $this->option('bin') ?: ($config['bin'] ?? 'rearm-server');
+        $binOpt = $this->option('bin');
+        $bin = RearmServer::resolveBinary([
+            'bin' => ($binOpt !== null && $binOpt !== '')
+                ? (string) $binOpt
+                : (($config['bin'] ?? null) ?: null),
+        ]);
         if (! self::binaryLooksAvailable((string) $bin)) {
             $this->components->error(
-                "Rearm binary not found: {$bin}. Set octane.rearm.bin / REARM_BIN or install rearm-server."
+                "Rearm binary not found: {$bin}. Run: php artisan rearm:install-binary"
             );
 
             return 1;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rearm\Octane;
 
+use Rearm\Octane\Commands\InstallBinaryCommand;
 use Rearm\Octane\Commands\RearmStartCommand;
 use Rearm\Octane\Commands\StartCommand;
 use Rearm\Octane\Commands\StartRearmCommand;
@@ -28,6 +29,7 @@ class RearmServiceProvider extends ServiceProvider
             $this->commands([
                 StartRearmCommand::class,
                 RearmStartCommand::class,
+                InstallBinaryCommand::class,
             ]);
 
             // k1roshio/octane-driver-rearm is discovered before laravel/octane alphabetically,
