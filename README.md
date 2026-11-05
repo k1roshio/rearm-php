@@ -22,6 +22,8 @@ Rust application server for Laravel 12 (PHP 8.5+): HTTP/1.1 + optional HTTP/3, B
 
 Packagist package name: **`k1roshio/octane-driver-rearm`** (publish from a repo whose *root* is this package — see [`docs/PACKAGIST.md`](docs/PACKAGIST.md)).
 
+**Full deploy template** (Octane config, all `REARM_*` knobs, systemd, tuning): [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
 ```bash
 composer require k1roshio/octane-driver-rearm
 php artisan rearm:install-binary   # downloads Linux prebuild into bin/rearm-server
@@ -65,17 +67,19 @@ HTTP: `http://127.0.0.1:8080` · HTTP/3: set `REARM_HTTP3=true` and mount certs.
 
 ## Configuration
 
-Rust reads env / CLI (see `rearm-server --help`). Common variables:
+Rust reads env / CLI (see `rearm-server --help`). Full Octane + scaling reference: [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 | Variable | Meaning |
 |----------|---------|
-| `REARM_HTTP_ADDR` | HTTP/1.1 listen (`0.0.0.0:8080`) |
+| `REARM_HTTP_ADDR` | HTTP/1.1 listen |
 | `REARM_HTTP3` | Opt-in QUIC (`false` by default) |
-| `REARM_WORKERS` / `REARM_WORKERS_MAX` | Elastic PHP pool |
-| `REARM_LONG_PATHS` | Split long pool allowlist (comma-separated) |
+| `REARM_WORKERS` / `REARM_WORKERS_MAX` | Warm min / elastic max PHP workers |
+| `REARM_SCALE_UP_*` | Waiters, queue ms, cooldown, batch — when to grow |
+| `REARM_SCALE_DOWN_*` | Idle ms, grace ms, batch — when to shrink |
+| `REARM_LONG_PATHS` (+ `REARM_LONG_WORKERS*`) | Optional slow-route pool split |
 | `REARM_FORK_SCALE` | Warm donor + `pcntl_fork` scale-up |
-| `REARM_APP_ROOT` | Laravel application path |
-| `REARM_WORKER_SCRIPT` | Path to `packages/octane-driver/bin/worker.php` |
+| `REARM_MEMORY_LIMIT_MB` / `REARM_MAX_REQUESTS` | Per-worker recycle |
+| `REARM_APP_ROOT` / `REARM_WORKER_SCRIPT` | Laravel root / worker entrypoint |
 
 Metrics: `GET /__rearm/metrics`
 
